@@ -101,6 +101,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--spot); outline-
 input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
 .stepper { display: flex; align-items: center; gap: 8px; }
 .stepper button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-size: 20px; }
+details summary::-webkit-details-marker { color: var(--spot); }
+details summary { color: var(--ink); }
 .notice { padding: 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--almost); font-size: 14px; line-height: 1.45; }
 
 #big { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: background-color .12s; padding: env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0); }
@@ -133,7 +135,7 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
     </button>
     <button class="mode" data-go="calib">
       <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></div>
-      <div><b>Venue and calibration</b><span>Pick your stage size and set the target volume in the room.</span></div>
+      <div><b>Set your voice goal</b><span>Find your stage voice and choose where the device will be.</span></div>
     </button>
   </div>
   <div class="row" style="padding:0 16px;border-radius:12px;border:1px dashed var(--line);margin-top:8px">
@@ -198,67 +200,73 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
   <div class="topbar">
     <button class="back" data-go="home"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Modes</button>
   </div>
-  <h1 style="font-size:34px">Venue and calibration</h1>
-  <div style="display:flex;flex-direction:column;gap:10px">
-    <div class="label">STAGE SIZE (STAGE TO BACK ROW)</div>
-    <div class="venues" id="venues"></div>
-  </div>
+  <h1 style="font-size:34px">Set your voice goal</h1>
+  <p class="lede" style="font-size:15px">Two quick steps. First find your stage voice, then tell Stagelight where the device will be.</p>
+
   <div class="card">
-    <b style="font-size:17px">Calibrate in the room</b>
+    <div class="label">STEP 1</div>
+    <b style="font-size:17px;margin-top:-6px">Find your stage voice</b>
+    <div style="font-size:14px;line-height:1.45;color:#C9CDD8">It works best with a helper who plays the audience. No helper? Picture someone at the back of the room and speak so they could hear every word.</div>
     <ol>
-      <li>Put the device on the tripod at the back row.</li>
-      <li>Tap Start listening.</li>
-      <li>Have an adult say a line from the stage at a good performance volume, and tap the button while they speak.</li>
-    </ol>
-    <div class="row mono" style="font-size:13px;min-height:0"><span>Hearing now</span><span id="hearTxt">--</span></div>
-    <button class="cta" id="calBtn">Start listening</button>
-    <div class="row mono muted" style="font-size:13px;min-height:0"><span id="calFor"></span><span id="calVal" style="color:var(--ink)"></span></div>
-    <button class="back" id="calReset" hidden style="align-self:flex-start;min-height:32px;font-size:14px">Go back to the preset target</button>
-  </div>
-  <div class="card">
-    <b style="font-size:17px">Find your stage voice</b>
-    <div style="font-size:14px;line-height:1.45;color:#C9CDD8">You need a helper to play the audience. Pick a quiet spot where nobody else is talking.</div>
-    <ol>
-      <li>Your helper stands far away, as far as your audience will be if you can. A gym, hallway or backyard works well.</li>
+      <li>Find a quiet spot. A helper stands far away, as far as your audience will be if you can. A gym, hallway or backyard works well.</li>
       <li>Hold this device about one arm's length from your mouth (2 feet).</li>
       <li>Tap <b>Start listening</b>.</li>
-      <li>Say <b>"Testing, one, two, three!"</b> to your helper in a big, strong voice. Don't scream.</li>
+      <li>Say <b>"Testing, one, two, three!"</b> in a big, strong voice. Don't scream.</li>
       <li>Your helper gives a thumbs up only if they understood every word without straining. No thumbs up? Try again a little louder.</li>
-      <li>Right after the thumbs up, tap <b>Save my stage voice</b>. It keeps your loudest moment from the last 10 seconds, so there's no rush.</li>
+      <li>Tap <b>Save my stage voice</b>. It keeps your loudest moment from the last 10 seconds, so there's no rush.</li>
     </ol>
-    <div style="font-size:13px;color:var(--muted)">Try it 2 or 3 times and save the one that felt right.</div>
     <div class="row mono" style="min-height:0;font-size:13px"><span>Loudest in the last 10 seconds</span><span id="peakTxt">--</span></div>
-    <div class="row"><span>Stage voice at 2 ft</span>
+    <button class="cta" id="rVoice">Start listening</button>
+    <div class="row"><span>Your stage voice (at 2 ft)</span>
       <div class="stepper"><button id="rMinus" aria-label="Lower stage voice level">−</button><span class="mono" id="rTxt" style="min-width:56px;text-align:center"></span><button id="rPlus" aria-label="Raise stage voice level">+</button></div>
     </div>
-    <button class="cta ghost" id="rVoice">Start listening</button>
-    <div class="label" style="margin-top:4px">USE THIS GOAL FOR</div>
+  </div>
+
+  <div class="card">
+    <div class="label">STEP 2</div>
+    <b style="font-size:17px;margin-top:-6px">Where will the device be?</b>
     <div class="venues" id="useFor" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
     <div>
-      <div class="row" style="min-height:0"><label for="dist">Device distance from the actor</label><span class="mono muted" id="distTxt" style="font-size:13px"></span></div>
+      <div class="row" style="min-height:0"><label for="dist">Distance from the actor</label><span class="mono muted" id="distTxt" style="font-size:13px"></span></div>
       <input id="dist" type="range" min="1" max="100" step="1">
     </div>
     <div class="row mono" style="min-height:0;font-size:13px"><span>Goal at that distance</span><span id="goalTxt" style="color:var(--spot)"></span></div>
     <button class="cta" id="saveGoal">Save goal</button>
-    <div class="muted" style="font-size:12px;line-height:1.45">Sound drops about 6 dB each time the distance doubles. Echoes in big rooms make real readings a little higher, so for large spaces a quick check in the actual room is still the most accurate.</div>
+    <div class="muted" style="font-size:12px;line-height:1.45">For a room, put the distance from the stage to the back row. Sound gets about 6 dB quieter each time the distance doubles, and Stagelight does that math for you.</div>
+  </div>
+
+  <div class="panel" style="display:flex;flex-direction:column;gap:6px">
+    <div class="label">YOUR GOALS</div>
+    <div class="row mono" style="min-height:0;font-size:13px"><span>Home practice</span><span id="sumHome"></span></div>
+    <div class="row mono" style="min-height:0;font-size:13px"><span id="sumVenueName"></span><span id="sumVenue"></span></div>
   </div>
 
   <div class="notice js-err" hidden></div>
-  <div style="display:flex;flex-direction:column;gap:18px">
-    <div>
-      <div class="row" style="min-height:0"><label for="fine">Fine-tune target</label><span class="mono muted" id="fineTxt" style="font-size:13px"></span></div>
-      <input id="fine" type="range" min="-10" max="10" step="1">
-      <div class="muted" style="font-size:12px">Lower makes the light easier to turn on.</div>
+
+  <details class="card" id="teacher">
+    <summary style="font-size:16px;font-weight:700;cursor:pointer;min-height:32px">Teacher options</summary>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+      <b style="font-size:15px">Check in the real room (optional)</b>
+      <ol>
+        <li>Put the device on a tripod at the back row.</li>
+        <li>Tap Start listening.</li>
+        <li>Have an adult say a line from the stage at a good performance volume, then tap the button.</li>
+      </ol>
+      <div class="row mono" style="min-height:0;font-size:13px"><span>Hearing now</span><span id="hearTxt">--</span></div>
+      <button class="cta ghost" id="calBtn">Start listening</button>
+      <div class="row mono muted" style="min-height:0;font-size:13px"><span id="calFor"></span><span id="calVal" style="color:var(--ink)"></span></div>
+      <button class="back" id="calReset" hidden style="align-self:flex-start;min-height:32px;font-size:14px">Go back to the preset goal</button>
+      <div style="margin-top:6px">
+        <div class="row" style="min-height:0"><label for="fine">Fine-tune rehearsal goal</label><span class="mono muted" id="fineTxt" style="font-size:13px"></span></div>
+        <input id="fine" type="range" min="-10" max="10" step="1">
+        <div class="muted" style="font-size:12px">Lower makes the light easier to turn on.</div>
+      </div>
+      <div>
+        <div class="row" style="min-height:0"><label for="hold">Keep light on after a word</label><span class="mono muted" id="holdTxt" style="font-size:13px"></span></div>
+        <input id="hold" type="range" min="0.1" max="1.5" step="0.1">
+      </div>
     </div>
-    <div>
-      <div class="row" style="min-height:0"><label for="hold">Keep light on after a word</label><span class="mono muted" id="holdTxt" style="font-size:13px"></span></div>
-      <input id="hold" type="range" min="0.1" max="1.5" step="0.1">
-    </div>
-    <div class="row">
-      <div><div>Home practice distance</div><div class="muted" style="font-size:12px">How far the device is from you at home</div></div>
-      <div class="stepper"><button id="dMinus" aria-label="Closer">−</button><span class="mono" id="dTxt" style="min-width:44px;text-align:center"></span><button id="dPlus" aria-label="Farther">+</button></div>
-    </div>
-  </div>
+  </details>
 </main>
 
 <!-- FULL-SCREEN SIGNAL -->
@@ -537,44 +545,20 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
   });
   $('big').addEventListener('click', function () { $('big').hidden = true; });
 
-  // ---- calibration ----
-  function renderVenues() {
-    var wrap = $('venues');
-    wrap.innerHTML = '';
-    VENUES.forEach(function (v) {
-      var b = document.createElement('button');
-      b.className = 'venue';
-      b.setAttribute('aria-pressed', String(v.id === S.venue));
-      var name = document.createElement('b'); name.textContent = v.name;
-      var d = document.createElement('span'); d.textContent = v.feet + ' ft';
-      b.appendChild(name); b.appendChild(d);
-      b.addEventListener('click', function () { S.venue = v.id; save(); renderCalib(); renderVenueLabels(); });
-      wrap.appendChild(b);
-    });
-  }
-  function renderCalib() {
-    renderVenues();
-    var v = venue();
-    $('calFor').textContent = 'Target for ' + v.name;
-    $('calVal').textContent = Math.round(baseTarget()) + ' dB · ' + (S.cal[S.venue] != null ? 'measured' : 'preset');
-    $('calReset').hidden = S.cal[S.venue] == null;
-    $('fine').value = S.fine;
-    $('fineTxt').textContent = (S.fine > 0 ? '+' : S.fine < 0 ? '−' : '') + Math.abs(S.fine) + ' dB';
-    $('hold').value = S.hold;
-    $('holdTxt').textContent = Number(S.hold).toFixed(1) + ' s';
-    $('dTxt').textContent = S.home + ' ft';
-    $('calBtn').textContent = running ? 'Set target from this voice' : 'Start listening';
-    $('hearTxt').textContent = running ? Math.round(level) + ' dB' : '--';
-    renderGoal();
-  }
-
-  // ---- voice goal from a 2 ft test ----
+  // ---- voice goal setup ----
   var useFor = 'home';
   var goalDist = S.home;
   function goalAt(d) { return S.ref - 20 * Math.log10(Math.max(d, 1) / 2); }
-  function renderGoal() {
+  function venueName(id) { for (var i = 0; i < VENUES.length; i++) if (VENUES[i].id === id) return VENUES[i].name.toLowerCase(); return id; }
+  function peakNow() { return recent.reduce(function (m, r) { return Math.max(m, r.db); }, 0); }
+
+  function renderCalib() {
+    // Step 1
     $('rTxt').textContent = S.ref + ' dB';
     $('rVoice').textContent = running ? 'Save my stage voice' : 'Start listening';
+    if (!running) $('peakTxt').textContent = '--';
+
+    // Step 2
     var wrap = $('useFor');
     wrap.innerHTML = '';
     [{ id: 'home', name: 'Home', feet: S.home }].concat(VENUES).forEach(function (v) {
@@ -587,26 +571,56 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
       b.addEventListener('click', function () {
         useFor = v.id;
         goalDist = v.id === 'home' ? S.home : v.feet;
-        renderGoal();
+        renderCalib();
       });
       wrap.appendChild(b);
     });
     $('dist').value = goalDist;
     $('distTxt').textContent = goalDist + ' ft';
     $('goalTxt').textContent = Math.round(goalAt(goalDist)) + ' dB';
-    var label = useFor === 'home' ? 'home' : venueName(useFor);
-    $('saveGoal').textContent = 'Save as ' + label + ' goal';
+    $('saveGoal').textContent = 'Save as ' + (useFor === 'home' ? 'home' : venueName(useFor)) + ' goal';
+
+    // Summary
+    var v = venue();
+    $('sumHome').textContent = Math.round(practiceTarget()) + ' dB at ' + S.home + ' ft';
+    $('sumVenueName').textContent = 'Rehearsal: ' + v.name;
+    $('sumVenue').textContent = Math.round(rehearsalTarget()) + ' dB at ' + v.feet + ' ft';
+
+    // Teacher options
+    $('calFor').textContent = 'Room goal for ' + v.name;
+    $('calVal').textContent = Math.round(baseTarget()) + ' dB';
+    $('calReset').hidden = S.cal[S.venue] == null;
+    $('calBtn').textContent = running ? 'Save this voice as the room goal' : 'Start listening';
+    $('hearTxt').textContent = running ? Math.round(level) + ' dB' : '--';
+    $('fine').value = S.fine;
+    $('fineTxt').textContent = (S.fine > 0 ? '+' : S.fine < 0 ? '−' : '') + Math.abs(S.fine) + ' dB';
+    $('hold').value = S.hold;
+    $('holdTxt').textContent = Number(S.hold).toFixed(1) + ' s';
   }
-  function venueName(id) { for (var i = 0; i < VENUES.length; i++) if (VENUES[i].id === id) return VENUES[i].name.toLowerCase(); return id; }
-  $('rMinus').addEventListener('click', function () { S.ref = Math.max(40, S.ref - 1); save(); renderGoal(); });
-  $('rPlus').addEventListener('click', function () { S.ref = Math.min(100, S.ref + 1); save(); renderGoal(); });
+
+  function renderCalibLive() {
+    $('hearTxt').textContent = Math.round(level) + ' dB';
+    var pk = peakNow();
+    $('peakTxt').textContent = pk ? Math.round(pk) + ' dB' : '--';
+  }
+
+  function flash(id, text) {
+    var b = $(id);
+    b.textContent = text;
+    b.style.background = 'var(--good)';
+    b.style.color = 'var(--stage)';
+    setTimeout(function () { b.style.background = ''; b.style.color = ''; renderCalib(); }, 1800);
+  }
+
   $('rVoice').addEventListener('click', function () {
     if (!running) { startAudio().then(function () { renderCalib(); }); return; }
-    var peak = recent.reduce(function (m, r) { return Math.max(m, r.db); }, level);
-    S.ref = Math.round(peak); save(); renderGoal();
-    var b = $('rVoice'); b.textContent = 'Stage voice saved';
-    setTimeout(renderGoal, 1800);
+    var pk = peakNow();
+    if (!pk) return;
+    S.ref = Math.round(pk); save();
+    flash('rVoice', 'Stage voice saved: ' + S.ref + ' dB');
   });
+  $('rMinus').addEventListener('click', function () { S.ref = Math.max(40, S.ref - 1); save(); renderCalib(); });
+  $('rPlus').addEventListener('click', function () { S.ref = Math.min(100, S.ref + 1); save(); renderCalib(); });
   $('dist').addEventListener('input', function (e) {
     goalDist = Number(e.target.value);
     $('distTxt').textContent = goalDist + ' ft';
@@ -616,30 +630,20 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
     var goal = Math.round(goalAt(goalDist));
     if (useFor === 'home') { S.homeCal = goal; S.home = goalDist; }
     else { S.cal[useFor] = goal; S.venue = useFor; S.fine = 0; }
-    save(); renderCalib(); renderVenueLabels();
-    var b = $('saveGoal'); b.textContent = 'Saved: ' + goal + ' dB'; b.style.background = 'var(--good)';
-    setTimeout(function () { b.style.background = ''; renderGoal(); }, 1800);
+    save(); renderVenueLabels();
+    flash('saveGoal', 'Saved: ' + goal + ' dB');
   });
-  function renderCalibLive() {
-    $('hearTxt').textContent = Math.round(level) + ' dB';
-    var pk = recent.reduce(function (m, r) { return Math.max(m, r.db); }, 0);
-    $('peakTxt').textContent = pk ? Math.round(pk) + ' dB' : '--';
-  }
 
   $('calBtn').addEventListener('click', function () {
     if (!running) { startAudio().then(function () { renderCalib(); }); return; }
-    var peak = recent.reduce(function (m, r) { return Math.max(m, r.db); }, level);
-    S.cal[S.venue] = Math.round(peak - 3);
-    S.fine = 0; save(); renderCalib();
-    var b = $('calBtn');
-    b.textContent = 'Target saved'; b.style.background = 'var(--good)';
-    setTimeout(function () { b.style.background = ''; renderCalib(); }, 1800);
+    var pk = peakNow() || level;
+    S.cal[S.venue] = Math.round(pk - 3);
+    S.fine = 0; save();
+    flash('calBtn', 'Room goal saved');
   });
   $('calReset').addEventListener('click', function () { delete S.cal[S.venue]; save(); renderCalib(); });
   $('fine').addEventListener('input', function (e) { S.fine = Number(e.target.value); save(); renderCalib(); });
   $('hold').addEventListener('input', function (e) { S.hold = Number(e.target.value); save(); renderCalib(); });
-  $('dMinus').addEventListener('click', function () { S.home = Math.max(3, S.home - 1); save(); renderCalib(); });
-  $('dPlus').addEventListener('click', function () { S.home = Math.min(30, S.home + 1); save(); renderCalib(); });
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && running) {
