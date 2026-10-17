@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E1016">
+<title>Stagelight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Figtree:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Stage-dark look: one deliberate dark theme for dim auditoriums. */
+:root {
+  --stage: #0E1016; --panel: #181B24; --line: #2A2F3D; --track: #232733;
+  --ink: #F2EFE6; --muted: #A9AEBE; --spot: #FFC94D;
+  --good: #3DDC84; --almost: #FFB020; --soft: #C9302C; --quiet: #3A3F4E;
+  --display: 'Big Shoulders Display', Impact, 'Arial Narrow', sans-serif;
+  --body: Figtree, -apple-system, system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--stage); color: var(--ink); font-family: var(--body); -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; }
+.screen {
+  max-width: 480px; margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px) max(20px, env(safe-area-inset-left, 0px));
+  display: flex; flex-direction: column; gap: 20px;
+}
+[hidden] { display: none !important; }
+h1 { margin: 0; font-family: var(--display); font-weight: 800; text-transform: uppercase; line-height: 0.95; letter-spacing: 0.01em; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; color: var(--spot); }
+.lede { margin: 0; font-size: 16px; line-height: 1.45; color: var(--muted); }
+.mono { font-family: var(--mono); }
+.muted { color: var(--muted); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--spot); outline-offset: 2px; }
+
+.mode { display: flex; gap: 14px; align-items: flex-start; text-align: left; width: 100%; padding: 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.mode .ic { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--line); color: var(--spot); display: grid; place-items: center; }
+.mode.hi .ic { background: var(--spot); color: var(--stage); }
+.mode b { display: block; font-size: 18px; margin-bottom: 4px; }
+.mode span { font-size: 14px; line-height: 1.4; color: var(--muted); }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.back { display: flex; align-items: center; gap: 4px; min-height: 44px; background: none; border: 0; color: var(--spot); font-weight: 600; font-size: 15px; padding: 0; }
+.chip { font-family: var(--mono); font-size: 12px; padding: 6px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); }
+
+.circle-wrap { display: flex; justify-content: center; padding: 10px 0; }
+.circle { width: 230px; height: 230px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 26px; transition: background-color .15s, box-shadow .15s, color .15s; background: var(--quiet); color: var(--ink); box-shadow: 0 0 0 10px rgba(58,63,78,.25); }
+.circle .big { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: .9; text-transform: uppercase; }
+.circle .sub { font-size: 15px; font-weight: 600; }
+.circle svg { width: 38px; height: 38px; }
+.s-soft { background: var(--soft); color: var(--ink); box-shadow: 0 0 0 10px rgba(201,48,44,.2), 0 0 60px rgba(201,48,44,.35); }
+.s-close { background: var(--almost); color: #2A1A00; box-shadow: 0 0 0 10px rgba(255,176,32,.18), 0 0 70px rgba(255,176,32,.4); }
+.s-good { background: var(--good); color: #06200F; box-shadow: 0 0 0 10px rgba(61,220,132,.2), 0 0 80px rgba(61,220,132,.5); }
+
+.meter-head { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; }
+.bar { position: relative; height: 22px; border-radius: 8px; background: var(--track); margin-top: 8px; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 8px; background: linear-gradient(90deg, var(--soft) 0%, var(--almost) 60%, var(--good) 76%); background-size: var(--full, 300px) 100%; transition: width .08s linear; }
+.bar .mark { position: absolute; top: -6px; bottom: -6px; left: 75%; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
+.bar-legend { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.panel { padding: 14px; border-radius: 14px; background: var(--panel); }
+.hist-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; margin-bottom: 8px; }
+.hist { display: flex; gap: 2px; height: 30px; align-items: flex-end; }
+.hist i { flex: 1; border-radius: 1.5px; height: 4px; background: var(--quiet); }
+
+.row { display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 15px; gap: 12px; }
+.switch { appearance: none; -webkit-appearance: none; width: 51px; height: 31px; border-radius: 999px; background: var(--line); position: relative; border: 0; flex: none; transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: var(--ink); transition: transform .15s; }
+.switch:checked { background: var(--spot); }
+.switch:checked::after { transform: translateX(20px); }
+
+.cta { min-height: 56px; width: 100%; border: 0; border-radius: 16px; font-weight: 700; font-size: 17px; background: var(--spot); color: var(--stage); }
+.cta.light { background: var(--ink); }
+.cta.ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+.cta:disabled { opacity: .45; }
+
+.tip { padding: 14px 16px; border-radius: 14px; background: rgba(255,201,77,.1); border: 1px solid rgba(255,201,77,.3); font-size: 15px; line-height: 1.45; }
+.tip b { color: var(--spot); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { padding: 14px; border-radius: 14px; background: var(--panel); }
+.stat small { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.stat strong { font-family: var(--mono); font-weight: 500; font-size: 22px; }
+
+.dist { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.dist div { flex: 1; min-width: 0; }
+.dist small { display: block; font-size: 12px; color: var(--muted); }
+.dist .mono { font-size: 15px; }
+
+.venues { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.venue { min-height: 60px; padding: 10px 14px; border-radius: 14px; text-align: left; background: var(--panel); border: 1px solid var(--line); color: var(--ink); }
+.venue b { display: block; font-size: 16px; }
+.venue span { font-family: var(--mono); font-size: 12px; opacity: .8; }
+.venue[aria-pressed="true"] { background: var(--spot); border-color: var(--spot); color: var(--stage); }
+.label { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+.card { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.card ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; color: #C9CDD8; }
+input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-size: 20px; }
+.notice { padding: 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--almost); font-size: 14px; line-height: 1.45; }
+
+#big { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: background-color .12s; padding: env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0); }
+#big.good { background: #FFFFFF; }
+#big.close { background: #000; }
+#big .bigword { font-family: var(--display); font-weight: 800; font-size: 64px; text-transform: uppercase; color: rgba(255,255,255,.18); text-align: center; }
+#big.good .bigword { color: rgba(0,0,0,.25); }
+#big .hint { position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 20px); font-size: 13px; color: rgba(255,255,255,.35); }
+#big.good .hint { color: rgba(0,0,0,.4); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<main id="home" class="screen">
+  <div style="display:flex;flex-direction:column;gap:10px;padding-top:24px">
+    <div class="eyebrow">STAGELIGHT</div>
+    <h1 style="font-size:52px">Can the back row hear you?</h1>
+    <p class="lede">A light at the back of the room tells actors when their voice reaches the audience.</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <button class="mode hi" data-go="rehearsal">
+      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 6h-4z"/><path d="M10 9v11h4V9"/></svg></div>
+      <div><b>Rehearsal monitor</b><span>For teachers and student spotters. Device on a tripod at the back row.</span></div>
+    </button>
+    <button class="mode" data-go="practice">
+      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg></div>
+      <div><b>Home practice</b><span>Practice your lines at home, scaled to the size of your real stage.</span></div>
+    </button>
+    <button class="mode" data-go="calib">
+      <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></div>
+      <div><b>Venue and calibration</b><span>Pick your stage size and set the target volume in the room.</span></div>
+    </button>
+  </div>
+  <div class="row" style="padding:0 16px;border-radius:12px;border:1px dashed var(--line);margin-top:8px">
+    <span class="muted" style="font-size:13px">Current venue</span><span class="mono js-venue" style="font-size:13px"></span>
+  </div>
+</main>
+
+<!-- MONITOR (rehearsal + practice) -->
+<main id="monitor" class="screen" hidden>
+  <div class="topbar">
+    <button class="back" data-go="home"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Modes</button>
+    <span class="chip js-venue js-reh"></span>
+  </div>
+  <h1 id="monTitle" style="font-size:34px">Rehearsal monitor</h1>
+
+  <div class="dist js-prac">
+    <div><small>Your device</small><span class="mono" id="homeDist"></span></div>
+    <svg width="40" height="16" viewBox="0 0 40 16" fill="none" stroke="#FFC94D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h34M30 3l6 5-6 5"/></svg>
+    <div style="text-align:right"><small>Practicing for</small><span class="mono js-venue"></span></div>
+  </div>
+
+  <div class="circle-wrap"><div class="circle" id="circle" role="status" aria-live="polite">
+    <svg id="cIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+    <div class="big" id="cTitle">Ready</div>
+    <div class="sub" id="cSub">Tap Start below</div>
+  </div></div>
+
+  <div>
+    <div class="meter-head"><span id="voiceTxt">Voice --</span><span class="muted" id="targetTxt"></span></div>
+    <div class="bar" id="bar"><div class="fill" id="fill"></div><div class="mark"></div></div>
+    <div class="bar-legend"><span>Softer</span><span>Back row hears you past the line</span></div>
+  </div>
+
+  <div class="panel js-reh">
+    <div class="hist-head"><b style="font-weight:600">Last 60 seconds</b><span class="mono" id="pct" style="color:var(--muted)">No voices yet</span></div>
+    <div class="hist" id="hist"></div>
+  </div>
+
+  <button class="cta ghost js-reh" id="bigBtn">Full-screen signal (easier to see from the stage)</button>
+
+  <div class="tip js-prac"><b>Tip: </b><span id="tip"></span></div>
+  <div class="stats js-prac">
+    <div class="stat"><small>In the green</small><strong id="green" style="color:var(--good)">0:00</strong></div>
+    <div class="stat"><small>Lines that reached</small><strong id="lines">0 of 0</strong></div>
+  </div>
+
+  <div class="notice js-err" hidden></div>
+  <button class="cta" id="monBtn">Start listening</button>
+</main>
+
+<!-- CALIBRATION -->
+<main id="calib" class="screen" hidden>
+  <div class="topbar">
+    <button class="back" data-go="home"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Modes</button>
+  </div>
+  <h1 style="font-size:34px">Venue and calibration</h1>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="label">STAGE SIZE (STAGE TO BACK ROW)</div>
+    <div class="venues" id="venues"></div>
+  </div>
+  <div class="card">
+    <b style="font-size:17px">Calibrate in the room</b>
+    <ol>
+      <li>Put the device on the tripod at the back row.</li>
+      <li>Tap Start listening.</li>
+      <li>Have an adult say a line from the stage at a good performance volume, and tap the button while they speak.</li>
+    </ol>
+    <div class="row mono" style="font-size:13px;min-height:0"><span>Hearing now</span><span id="hearTxt">--</span></div>
+    <button class="cta" id="calBtn">Start listening</button>
+    <div class="row mono muted" style="font-size:13px;min-height:0"><span id="calFor"></span><span id="calVal" style="color:var(--ink)"></span></div>
+    <button class="back" id="calReset" hidden style="align-self:flex-start;min-height:32px;font-size:14px">Go back to the preset target</button>
+  </div>
+  <div class="notice js-err" hidden></div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div>
+      <div class="row" style="min-height:0"><label for="fine">Fine-tune target</label><span class="mono muted" id="fineTxt" style="font-size:13px"></span></div>
+      <input id="fine" type="range" min="-10" max="10" step="1">
+      <div class="muted" style="font-size:12px">Lower makes the light easier to turn on.</div>
+    </div>
+    <div>
+      <div class="row" style="min-height:0"><label for="hold">Keep light on after a word</label><span class="mono muted" id="holdTxt" style="font-size:13px"></span></div>
+      <input id="hold" type="range" min="0.1" max="1.5" step="0.1">
+    </div>
+    <div class="row">
+      <div><div>Home practice distance</div><div class="muted" style="font-size:12px">How far the device is from you at home</div></div>
+      <div class="stepper"><button id="dMinus" aria-label="Closer">−</button><span class="mono" id="dTxt" style="min-width:44px;text-align:center"></span><button id="dPlus" aria-label="Farther">+</button></div>
+    </div>
+  </div>
+</main>
+
+<!-- FULL-SCREEN SIGNAL -->
+<div id="big" hidden role="button" aria-label="Exit full-screen signal">
+  <div class="bigword" id="bigWord">Listening</div>
+  <div class="hint">Tap anywhere to exit</div>
+</div>
+
+<script>
+(function () {
+  var VENUES = [
+    { id: 'classroom', name: 'Classroom', feet: 20, preset: 62 },
+    { id: 'cafeteria', name: 'Cafeteria', feet: 40, preset: 58 },
+    { id: 'auditorium', name: 'Auditorium', feet: 60, preset: 56 },
+    { id: 'hall', name: 'Large hall', feet: 90, preset: 54 }
+  ];
+  var TIPS = [
+    'Breathe low from your belly and send your voice to the back wall, not to the person next to you.',
+    'Open your mouth wider. Clear consonants carry farther than shouting does.',
+    'Keep your chin up and face the audience, not the floor.',
+    'Slow down a little. Big rooms blur fast words together.',
+    "Keep your energy to the end of each line. Don't let the last word fade."
+  ];
+  var MIC_OFFSET = 100; // converts digital level to an approximate dB reading
+  var STATES = {
+    idle: { title: 'Listening', sub: 'Waiting for a voice', cls: '', icon: '<path d="M6 8.5a6 6 0 1 1 12 0c0 4-4 4.5-4 8a3 3 0 0 1-6 0"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0"/>' },
+    soft: { title: 'Too soft', sub: 'Project to the back row', cls: 's-soft', icon: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>' },
+    close: { title: 'Almost', sub: 'A little louder', cls: 's-close', icon: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>' },
+    good: { title: 'Loud enough', sub: 'The back row hears you', cls: 's-good', icon: '<path d="M5 12.5l4.5 4.5L19 7.5"/>' }
+  };
+  var RANK = { idle: 0, soft: 1, close: 2, good: 3 };
+
+  // ---- settings ----
+  var S = { venue: 'auditorium', cal: {}, fine: 0, hold: 0.5, home: 10 };
+  try { var saved = JSON.parse(localStorage.getItem('pl-settings') || 'null'); if (saved) for (var k in saved) S[k] = saved[k]; } catch (e) {}
+  function save() { try { localStorage.setItem('pl-settings', JSON.stringify(S)); } catch (e) {} }
+  function venue() { for (var i = 0; i < VENUES.length; i++) if (VENUES[i].id === S.venue) return VENUES[i]; return VENUES[2]; }
+  function baseTarget() { return S.cal[S.venue] != null ? S.cal[S.venue] : venue().preset; }
+  function rehearsalTarget() { return baseTarget() + S.fine; }
+  function practiceTarget() { return rehearsalTarget() + 20 * Math.log10(venue().feet / Math.max(S.home, 1)); }
+
+  // ---- screens ----
+  var mode = 'home';
+  var $ = function (id) { return document.getElementById(id); };
+  function show(id) {
+    stopAudio();
+    ['home', 'monitor', 'calib'].forEach(function (s) { $(s).hidden = s !== id; });
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-go]').forEach(function (b) {
+    b.addEventListener('click', function () { go(b.getAttribute('data-go')); });
+  });
+  function go(where) {
+    mode = where;
+    if (where === 'rehearsal' || where === 'practice') {
+      show('monitor');
+      var reh = where === 'rehearsal';
+      $('monTitle').textContent = reh ? 'Rehearsal monitor' : 'Home practice';
+      document.querySelectorAll('.js-reh').forEach(function (el) { el.hidden = !reh; });
+      document.querySelectorAll('.js-prac').forEach(function (el) { el.hidden = reh; });
+      $('tip').textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+      $('monBtn').textContent = reh ? 'Start listening' : 'Start practice';
+      $('monBtn').className = reh ? 'cta light' : 'cta';
+      resetStats(); lastShown = undefined; renderMonitor();
+    } else if (where === 'calib') {
+      show('calib'); renderCalib();
+    } else {
+      show('home');
+    }
+    renderVenueLabels();
+  }
+  function target() { return mode === 'practice' ? practiceTarget() : rehearsalTarget(); }
+  function renderVenueLabels() {
+    var v = venue();
+    document.querySelectorAll('.js-venue').forEach(function (el) { el.textContent = v.name + ' · ' + v.feet + ' ft'; });
+    $('homeDist').textContent = S.home + ' ft away';
+  }
+
+  // ---- audio ----
+  var ctx = null, analyser = null, stream = null, buf = null, raf = 0, running = false, wake = null;
+  var smoothed = 0, level = 0, state = 'idle', lastGood = 0, lastFrame = 0;
+  var recent = [], history = [], secondBest = 'idle', secondStart = 0;
+  var greenSec = 0, linesTotal = 0, linesReached = 0, inLine = false, lineReached = false, lineStart = 0, lastVoice = 0;
+
+  function resetStats() {
+    smoothed = 0; level = 0; state = 'idle'; lastGood = 0; lastFrame = 0; recent = []; history = [];
+    secondBest = 'idle'; secondStart = performance.now(); greenSec = 0; linesTotal = 0; linesReached = 0; inLine = false;
+  }
+  function showError(msg) {
+    document.querySelectorAll('.js-err').forEach(function (el) { el.textContent = msg; el.hidden = !msg; });
+  }
+  function startAudio() {
+    showError('');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showError('The microphone only works when this page is opened from its https:// web address.');
+      return Promise.resolve(false);
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+      .then(function (s) {
+        stream = s;
+        var src = ctx.createMediaStreamSource(s);
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        src.connect(analyser);
+        buf = new Float32Array(analyser.fftSize);
+        if (ctx.state === 'suspended') ctx.resume();
+        resetStats();
+        running = true;
+        try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { wake = w; }).catch(function () {}); } catch (e) {}
+        raf = requestAnimationFrame(loop);
+        return true;
+      })
+      .catch(function () {
+        try { ctx.close(); } catch (e) {}
+        ctx = null;
+        showError('Microphone access was blocked. In Safari, tap the "aA" button in the address bar, choose Website Settings, and allow the microphone. Then try again.');
+        return false;
+      });
+  }
+  function stopAudio() {
+    running = false;
+    cancelAnimationFrame(raf);
+    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+    if (ctx) { try { ctx.close(); } catch (e) {} }
+    if (wake) { try { wake.release(); } catch (e) {} }
+    stream = null; ctx = null; wake = null; state = 'idle';
+    $('big').hidden = true;
+  }
+
+  function loop(now) {
+    if (!running) return;
+    analyser.getFloatTimeDomainData(buf);
+    var sum = 0;
+    for (var i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    var rms = Math.sqrt(sum / buf.length);
+    var db = 20 * Math.log10(Math.max(rms, 1e-7)) + MIC_OFFSET;
+    process(db, now);
+    if (mode === 'calib') renderCalibLive(); else renderMonitor();
+    raf = requestAnimationFrame(loop);
+  }
+
+  function process(db, now) {
+    var t = target();
+    if (smoothed === 0) smoothed = db;
+    smoothed += (db - smoothed) * (db > smoothed ? 0.4 : 0.1);
+    level = smoothed;
+    recent.push({ t: now, db: smoothed });
+    while (recent.length && now - recent[0].t > 1500) recent.shift();
+
+    if (smoothed >= t) lastGood = now;
+    if (now - lastGood <= S.hold * 1000) state = 'good';
+    else if (smoothed >= t - 6) state = 'close';
+    else if (smoothed >= t - 18) state = 'soft';
+    else state = 'idle';
+
+    if (lastFrame && state === 'good') greenSec += (now - lastFrame) / 1000;
+    lastFrame = now;
+
+    if (smoothed >= t - 18) {
+      if (!inLine) { inLine = true; lineReached = false; lineStart = now; }
+      lastVoice = now;
+      if (state === 'good') lineReached = true;
+    } else if (inLine && now - lastVoice > 1000) {
+      inLine = false;
+      if (lastVoice - lineStart >= 500) { linesTotal++; if (lineReached) linesReached++; }
+    }
+
+    if (RANK[state] > RANK[secondBest]) secondBest = state;
+    if (now - secondStart >= 1000) {
+      history.push(secondBest);
+      if (history.length > 60) history.shift();
+      secondBest = 'idle'; secondStart = now;
+    }
+  }
+
+  // ---- monitor rendering ----
+  var histEl = $('hist');
+  for (var h = 0; h < 60; h++) histEl.appendChild(document.createElement('i'));
+  var BAR = { idle: [4, 'var(--quiet)'], soft: [10, 'var(--soft)'], close: [18, 'var(--almost)'], good: [28, 'var(--good)'] };
+  var lastShown = null;
+
+  function frac(v, t) { return Math.min(Math.max((v - (t - 30)) / 40, 0), 1); }
+
+  function renderMonitor() {
+    var t = target();
+    var shown = running ? state : null;
+    if (shown !== lastShown) {
+      lastShown = shown;
+      var c = $('circle');
+      if (!running) {
+        c.className = 'circle';
+        $('cIcon').innerHTML = '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>';
+        $('cTitle').textContent = 'Ready';
+        $('cSub').textContent = mode === 'practice' ? 'Tap Start practice' : 'Tap Start listening';
+      } else {
+        var st = STATES[state];
+        c.className = 'circle ' + st.cls;
+        $('cIcon').innerHTML = st.icon;
+        $('cTitle').textContent = st.title;
+        $('cSub').textContent = st.sub;
+      }
+      var big = $('big');
+      big.className = state === 'good' ? 'good' : (state === 'close' ? 'close' : '');
+      $('bigWord').textContent = running ? STATES[state].title : 'Listening';
+    }
+    $('voiceTxt').textContent = running ? 'Voice ' + Math.round(level) + ' dB' : 'Voice --';
+    $('targetTxt').textContent = 'Target ' + Math.round(t) + ' dB';
+    var barW = $('bar').clientWidth;
+    var fill = $('fill');
+    fill.style.setProperty('--full', barW + 'px');
+    fill.style.width = (running ? frac(level, t) * 100 : 0) + '%';
+
+    if (mode === 'rehearsal') {
+      var pad = 60 - history.length, kids = histEl.children;
+      for (var i = 0; i < 60; i++) {
+        var s = i < pad ? 'idle' : history[i - pad];
+        kids[i].style.height = BAR[s][0] + 'px';
+        kids[i].style.background = BAR[s][1];
+      }
+      var spoken = history.filter(function (s) { return s !== 'idle'; });
+      var pct = $('pct');
+      if (spoken.length) {
+        var good = spoken.filter(function (s) { return s === 'good'; }).length;
+        pct.textContent = Math.round(good / spoken.length * 100) + '% loud enough';
+        pct.style.color = 'var(--good)';
+      } else { pct.textContent = 'No voices yet'; pct.style.color = 'var(--muted)'; }
+    } else {
+      var g = Math.floor(greenSec);
+      $('green').textContent = Math.floor(g / 60) + ':' + String(g % 60).padStart(2, '0');
+      $('lines').textContent = linesReached + ' of ' + linesTotal;
+    }
+  }
+
+  $('monBtn').addEventListener('click', function () {
+    var reh = mode === 'rehearsal';
+    if (running) {
+      stopAudio();
+      $('monBtn').textContent = reh ? 'Start listening' : 'Start practice';
+      lastShown = undefined; renderMonitor();
+    } else {
+      startAudio().then(function (ok) {
+        if (ok) $('monBtn').textContent = reh ? 'Stop listening' : 'Pause practice';
+        lastShown = undefined; renderMonitor();
+      });
+    }
+  });
+  $('bigBtn').addEventListener('click', function () {
+    var open = function () { $('big').hidden = false; lastShown = undefined; renderMonitor(); };
+    if (running) open();
+    else startAudio().then(function (ok) { if (ok) { $('monBtn').textContent = 'Stop listening'; open(); } });
+  });
+  $('big').addEventListener('click', function () { $('big').hidden = true; });
+
+  // ---- calibration ----
+  function renderVenues() {
+    var wrap = $('venues');
+    wrap.innerHTML = '';
+    VENUES.forEach(function (v) {
+      var b = document.createElement('button');
+      b.className = 'venue';
+      b.setAttribute('aria-pressed', String(v.id === S.venue));
+      var name = document.createElement('b'); name.textContent = v.name;
+      var d = document.createElement('span'); d.textContent = v.feet + ' ft';
+      b.appendChild(name); b.appendChild(d);
+      b.addEventListener('click', function () { S.venue = v.id; save(); renderCalib(); renderVenueLabels(); });
+      wrap.appendChild(b);
+    });
+  }
+  function renderCalib() {
+    renderVenues();
+    var v = venue();
+    $('calFor').textContent = 'Target for ' + v.name;
+    $('calVal').textContent = Math.round(baseTarget()) + ' dB · ' + (S.cal[S.venue] != null ? 'measured' : 'preset');
+    $('calReset').hidden = S.cal[S.venue] == null;
+    $('fine').value = S.fine;
+    $('fineTxt').textContent = (S.fine > 0 ? '+' : S.fine < 0 ? '−' : '') + Math.abs(S.fine) + ' dB';
+    $('hold').value = S.hold;
+    $('holdTxt').textContent = Number(S.hold).toFixed(1) + ' s';
+    $('dTxt').textContent = S.home + ' ft';
+    $('calBtn').textContent = running ? 'Set target from this voice' : 'Start listening';
+    $('hearTxt').textContent = running ? Math.round(level) + ' dB' : '--';
+  }
+  function renderCalibLive() { $('hearTxt').textContent = Math.round(level) + ' dB'; }
+
+  $('calBtn').addEventListener('click', function () {
+    if (!running) { startAudio().then(function () { renderCalib(); }); return; }
+    var peak = recent.reduce(function (m, r) { return Math.max(m, r.db); }, level);
+    S.cal[S.venue] = Math.round(peak - 3);
+    S.fine = 0; save(); renderCalib();
+    var b = $('calBtn');
+    b.textContent = 'Target saved'; b.style.background = 'var(--good)';
+    setTimeout(function () { b.style.background = ''; renderCalib(); }, 1800);
+  });
+  $('calReset').addEventListener('click', function () { delete S.cal[S.venue]; save(); renderCalib(); });
+  $('fine').addEventListener('input', function (e) { S.fine = Number(e.target.value); save(); renderCalib(); });
+  $('hold').addEventListener('input', function (e) { S.hold = Number(e.target.value); save(); renderCalib(); });
+  $('dMinus').addEventListener('click', function () { S.home = Math.max(3, S.home - 1); save(); renderCalib(); });
+  $('dPlus').addEventListener('click', function () { S.home = Math.min(30, S.home + 1); save(); renderCalib(); });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && running) {
+      stopAudio();
+      if (mode === 'calib') renderCalib();
+      else { $('monBtn').textContent = mode === 'rehearsal' ? 'Start listening' : 'Start practice'; lastShown = undefined; renderMonitor(); }
+    }
+  });
+
+  renderVenueLabels();
+})();
+</script>
+</body>
+</html>
