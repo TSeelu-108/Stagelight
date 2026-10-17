@@ -180,6 +180,15 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
     <div class="stat"><small>Lines that reached</small><strong id="lines">0 of 0</strong></div>
   </div>
 
+  <div class="panel js-prac" style="display:flex;flex-direction:column;gap:10px">
+    <div class="row" style="min-height:0"><span>Home target</span><span class="mono" id="homeTgt" style="font-size:13px"></span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="stepper"><button id="hMinus" aria-label="Lower home target">−</button><button id="hPlus" aria-label="Raise home target">+</button></div>
+      <button class="cta ghost" id="hVoice" style="min-height:44px;font-size:15px;flex:1">Set from my voice</button>
+    </div>
+    <button class="back" id="hReset" hidden style="align-self:flex-start;min-height:32px;font-size:14px">Use the stage-size target instead</button>
+  </div>
+
   <div class="notice js-err" hidden></div>
   <button class="cta" id="monBtn">Start listening</button>
 </main>
@@ -206,6 +215,34 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
     <div class="row mono muted" style="font-size:13px;min-height:0"><span id="calFor"></span><span id="calVal" style="color:var(--ink)"></span></div>
     <button class="back" id="calReset" hidden style="align-self:flex-start;min-height:32px;font-size:14px">Go back to the preset target</button>
   </div>
+  <div class="card">
+    <b style="font-size:17px">Find your stage voice</b>
+    <div style="font-size:14px;line-height:1.45;color:#C9CDD8">You need a helper to play the audience. Pick a quiet spot where nobody else is talking.</div>
+    <ol>
+      <li>Your helper stands far away, as far as your audience will be if you can. A gym, hallway or backyard works well.</li>
+      <li>Hold this device about one arm's length from your mouth (2 feet).</li>
+      <li>Tap <b>Start listening</b>.</li>
+      <li>Say <b>"Testing, one, two, three!"</b> to your helper in a big, strong voice. Don't scream.</li>
+      <li>Your helper gives a thumbs up only if they understood every word without straining. No thumbs up? Try again a little louder.</li>
+      <li>Right after the thumbs up, tap <b>Save my stage voice</b>. It keeps your loudest moment from the last 10 seconds, so there's no rush.</li>
+    </ol>
+    <div style="font-size:13px;color:var(--muted)">Try it 2 or 3 times and save the one that felt right.</div>
+    <div class="row mono" style="min-height:0;font-size:13px"><span>Loudest in the last 10 seconds</span><span id="peakTxt">--</span></div>
+    <div class="row"><span>Stage voice at 2 ft</span>
+      <div class="stepper"><button id="rMinus" aria-label="Lower stage voice level">−</button><span class="mono" id="rTxt" style="min-width:56px;text-align:center"></span><button id="rPlus" aria-label="Raise stage voice level">+</button></div>
+    </div>
+    <button class="cta ghost" id="rVoice">Start listening</button>
+    <div class="label" style="margin-top:4px">USE THIS GOAL FOR</div>
+    <div class="venues" id="useFor" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+    <div>
+      <div class="row" style="min-height:0"><label for="dist">Device distance from the actor</label><span class="mono muted" id="distTxt" style="font-size:13px"></span></div>
+      <input id="dist" type="range" min="1" max="100" step="1">
+    </div>
+    <div class="row mono" style="min-height:0;font-size:13px"><span>Goal at that distance</span><span id="goalTxt" style="color:var(--spot)"></span></div>
+    <button class="cta" id="saveGoal">Save goal</button>
+    <div class="muted" style="font-size:12px;line-height:1.45">Sound drops about 6 dB each time the distance doubles. Echoes in big rooms make real readings a little higher, so for large spaces a quick check in the actual room is still the most accurate.</div>
+  </div>
+
   <div class="notice js-err" hidden></div>
   <div style="display:flex;flex-direction:column;gap:18px">
     <div>
@@ -255,13 +292,16 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
   var RANK = { idle: 0, soft: 1, close: 2, good: 3 };
 
   // ---- settings ----
-  var S = { venue: 'auditorium', cal: {}, fine: 0, hold: 0.5, home: 10 };
+  var S = { venue: 'auditorium', cal: {}, fine: 0, hold: 0.5, home: 10, homeCal: null, ref: 70 };
   try { var saved = JSON.parse(localStorage.getItem('pl-settings') || 'null'); if (saved) for (var k in saved) S[k] = saved[k]; } catch (e) {}
   function save() { try { localStorage.setItem('pl-settings', JSON.stringify(S)); } catch (e) {} }
   function venue() { for (var i = 0; i < VENUES.length; i++) if (VENUES[i].id === S.venue) return VENUES[i]; return VENUES[2]; }
   function baseTarget() { return S.cal[S.venue] != null ? S.cal[S.venue] : venue().preset; }
   function rehearsalTarget() { return baseTarget() + S.fine; }
-  function practiceTarget() { return rehearsalTarget() + 20 * Math.log10(venue().feet / Math.max(S.home, 1)); }
+  function practiceTarget() {
+    if (S.homeCal != null) return S.homeCal;
+    return rehearsalTarget() + 20 * Math.log10(venue().feet / Math.max(S.home, 1));
+  }
 
   // ---- screens ----
   var mode = 'home';
@@ -371,7 +411,7 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
     smoothed += (db - smoothed) * (db > smoothed ? 0.4 : 0.1);
     level = smoothed;
     recent.push({ t: now, db: smoothed });
-    while (recent.length && now - recent[0].t > 1500) recent.shift();
+    while (recent.length && now - recent[0].t > 10000) recent.shift();
 
     if (smoothed >= t) lastGood = now;
     if (now - lastGood <= S.hold * 1000) state = 'good';
@@ -454,8 +494,28 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
       var g = Math.floor(greenSec);
       $('green').textContent = Math.floor(g / 60) + ':' + String(g % 60).padStart(2, '0');
       $('lines').textContent = linesReached + ' of ' + linesTotal;
+      renderHomeTarget();
     }
   }
+
+  function renderHomeTarget() {
+    var mine = S.homeCal != null;
+    $('homeTgt').textContent = Math.round(practiceTarget()) + ' dB · ' + (mine ? 'set by you' : 'from stage size');
+    $('hReset').hidden = !mine;
+    $('hVoice').disabled = !running;
+  }
+  function setHome(v) { S.homeCal = Math.round(v); save(); renderMonitor(); }
+  $('hMinus').addEventListener('click', function () { setHome(practiceTarget() - 1); });
+  $('hPlus').addEventListener('click', function () { setHome(practiceTarget() + 1); });
+  $('hVoice').addEventListener('click', function () {
+    if (!running) return;
+    var peak = recent.reduce(function (m, r) { return Math.max(m, r.db); }, level);
+    setHome(peak - 2);
+    var b = $('hVoice');
+    b.textContent = 'Home target saved';
+    setTimeout(function () { b.textContent = 'Set from my voice'; }, 1800);
+  });
+  $('hReset').addEventListener('click', function () { S.homeCal = null; save(); renderMonitor(); });
 
   $('monBtn').addEventListener('click', function () {
     var reh = mode === 'rehearsal';
@@ -505,8 +565,66 @@ input[type=range] { width: 100%; accent-color: var(--spot); height: 32px; }
     $('dTxt').textContent = S.home + ' ft';
     $('calBtn').textContent = running ? 'Set target from this voice' : 'Start listening';
     $('hearTxt').textContent = running ? Math.round(level) + ' dB' : '--';
+    renderGoal();
   }
-  function renderCalibLive() { $('hearTxt').textContent = Math.round(level) + ' dB'; }
+
+  // ---- voice goal from a 2 ft test ----
+  var useFor = 'home';
+  var goalDist = S.home;
+  function goalAt(d) { return S.ref - 20 * Math.log10(Math.max(d, 1) / 2); }
+  function renderGoal() {
+    $('rTxt').textContent = S.ref + ' dB';
+    $('rVoice').textContent = running ? 'Save my stage voice' : 'Start listening';
+    var wrap = $('useFor');
+    wrap.innerHTML = '';
+    [{ id: 'home', name: 'Home', feet: S.home }].concat(VENUES).forEach(function (v) {
+      var b = document.createElement('button');
+      b.className = 'venue';
+      b.style.minHeight = '48px';
+      b.setAttribute('aria-pressed', String(v.id === useFor));
+      var name = document.createElement('b'); name.textContent = v.name; name.style.fontSize = '14px';
+      b.appendChild(name);
+      b.addEventListener('click', function () {
+        useFor = v.id;
+        goalDist = v.id === 'home' ? S.home : v.feet;
+        renderGoal();
+      });
+      wrap.appendChild(b);
+    });
+    $('dist').value = goalDist;
+    $('distTxt').textContent = goalDist + ' ft';
+    $('goalTxt').textContent = Math.round(goalAt(goalDist)) + ' dB';
+    var label = useFor === 'home' ? 'home' : venueName(useFor);
+    $('saveGoal').textContent = 'Save as ' + label + ' goal';
+  }
+  function venueName(id) { for (var i = 0; i < VENUES.length; i++) if (VENUES[i].id === id) return VENUES[i].name.toLowerCase(); return id; }
+  $('rMinus').addEventListener('click', function () { S.ref = Math.max(40, S.ref - 1); save(); renderGoal(); });
+  $('rPlus').addEventListener('click', function () { S.ref = Math.min(100, S.ref + 1); save(); renderGoal(); });
+  $('rVoice').addEventListener('click', function () {
+    if (!running) { startAudio().then(function () { renderCalib(); }); return; }
+    var peak = recent.reduce(function (m, r) { return Math.max(m, r.db); }, level);
+    S.ref = Math.round(peak); save(); renderGoal();
+    var b = $('rVoice'); b.textContent = 'Stage voice saved';
+    setTimeout(renderGoal, 1800);
+  });
+  $('dist').addEventListener('input', function (e) {
+    goalDist = Number(e.target.value);
+    $('distTxt').textContent = goalDist + ' ft';
+    $('goalTxt').textContent = Math.round(goalAt(goalDist)) + ' dB';
+  });
+  $('saveGoal').addEventListener('click', function () {
+    var goal = Math.round(goalAt(goalDist));
+    if (useFor === 'home') { S.homeCal = goal; S.home = goalDist; }
+    else { S.cal[useFor] = goal; S.venue = useFor; S.fine = 0; }
+    save(); renderCalib(); renderVenueLabels();
+    var b = $('saveGoal'); b.textContent = 'Saved: ' + goal + ' dB'; b.style.background = 'var(--good)';
+    setTimeout(function () { b.style.background = ''; renderGoal(); }, 1800);
+  });
+  function renderCalibLive() {
+    $('hearTxt').textContent = Math.round(level) + ' dB';
+    var pk = recent.reduce(function (m, r) { return Math.max(m, r.db); }, 0);
+    $('peakTxt').textContent = pk ? Math.round(pk) + ' dB' : '--';
+  }
 
   $('calBtn').addEventListener('click', function () {
     if (!running) { startAudio().then(function () { renderCalib(); }); return; }
